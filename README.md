@@ -11,61 +11,130 @@
 
 ## Agenda
 
-- **[Overview of cloud computing concepts](#overview-of-cloud-computing-concepts) (10 minutes)**
-  - IaaS, PaaS, SaaS, metered services, scalability
-- **[Introduction to Microsoft Azure](#introduction-to-microsoft-azure) (10 minutes)**
-  - Azure portal, Azure services, Azure regions
-- **[Cost management](#cost-management)**
-  - Subscription, budgets, cost analysis tools
-- **[Demo](#demo)**
-  - Interact with Azure using Portal/Cloud Shell/PowerShell/Azure CLI (15 minutes)**
+- **[Azure Resource Manager (ARM) Overview](#azure-resource-manager-arm-overview) (5 minutes)**
+- **[Azure Storage](#azure-storage) (5 minutes)**
+- **[Azure Virtual Machines](#azure-virtual-machines) (5 minutes)**
+- **[Azure Networking](#azure-networking) (5 minutes)**
+  - Virtual Network, Subnet, Network Security Group, Application Gateway, Load Balancer
+- **[Azure App Services (Web Apps, App Service Plan)](#azure-app-services) (5 minutes)**
+  - Web Apps, App Service Plan
+- **[Demo](#demo) (10 minutes)**
+  - Deploy a web app using Azure App Services (REST API / azurerm provider)
+  - Edit html code using cloud shell and update web app
 - **Q&A (15 minutes)**
 
 
-## Overview of cloud computing concepts
+## Azure Resource Manager (ARM) Overview
 <div style="display: flex; justify-content: space-between;">
-  <img src="./content/cloud_service_types1.png" alt="Cloud Computing" style="width: 48%;">
-  <img src="./content/cloud_service_types2.png" alt="Cloud Computing Models" style="width: 48%;">
-</div>
-<br>
-<img src="./content/hybrid.png" alt="Hybrid Cloud" style="width: 75%;">
-
-### Cloud Deployment Models Comparison
-| **Public Cloud**                                  | **Private Cloud**                                   | **Hybrid Cloud**                                   |
-|----------------------------------------------------|-----------------------------------------------------|----------------------------------------------------|
-| portal.azure.com / portal.azure.us                 | portal.azurestack.local                             | portal.azure.com + portal.local.azurestack.external                                   |
-| No capital expenditures to scale up                | Organizations have complete control over resources and security | Provides the most flexibility                      |
-| Applications can be quickly provisioned and deprovisioned | Data is not collocated with other organizations’ data | Organizations determine where to run their applications |
-| Organizations pay only for what they use           | Hardware must be purchased for startup and maintenance | Organizations control security, compliance, or legal requirements |
-| Organizations don’t have complete control over resources and security | Organizations are responsible for hardware maintenance and updates |                                                    |
-
-
-## Introduction to Microsoft Azure
-<div style="display: flex; justify-content: space-between;">
-  <img src="./content/regions.png" alt="Azure Regions" style="width: 48%;">
-  <img src="./content/region-pairs-7c495a33-85c0fa20.png" alt="Azure Region Pairs" style="width: 48%;">
+  <img src="./content/arm.png" alt="Azure Regions" style="width: 48%;">
+  <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+    <div style="display: flex; flex-direction: column; align-items: center; padding: 10px;">
+      <img src="./content/vm_create_options.png" alt="Azure Region Pairs" style="width: 70%; margin-bottom: 10px;">
+      <img src="./content/terraform_bicep.png" alt="Azure Region Pairs" style="width: 70%;">
+    </div>
+  </div>
 </div>
 
-- [Azure Datacenters](https://datacenters.microsoft.com/globe/explore)
-- [Services by Scope/IL](https://learn.microsoft.com/en-us/azure/azure-government/compliance/azure-services-in-fedramp-auditscope)
+### ARM Template Structure
 
-## Use Cases for Specific Workloads that Benefit from Zonal Redundancy
+```json
+{
+  // The schema that defines the structure and validation of the ARM template
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  // The version of the template content
+  "contentVersion": "1.0.0.0",
+  // Parameters that can be provided when deploying the template to customize resource properties
+  "parameters": {},
+  // Variables that are used within the template to simplify expressions and avoid repetition
+  "variables": {},
+  // The resources to be deployed or managed by the template
+  "resources": []
+  // The outputs that are returned after the deployment is complete
+  "outputs": {}
+}
+```
+### ARM Template Example
+```json
+{
+  "parameters": {
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-04-01",
+      "name": "[concat('storage', uniqueString(resourceGroup().id))]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {}
+    }
+  ],
+  "outputs": {
+    "storageAccountName": {
+      "type": "string",
+      "value": "[concat('storage', uniqueString(resourceGroup().id))]"
+    }
+  }
+}
+```
+### Additional Resources
 
-Zonal redundancy ensures that your applications and data are resilient to failures within a single data center. Here are some specific workloads that benefit from zonal redundancy:
+- [Azure Resource Manager Documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/overview)
+- [ARM Template Reference](https://docs.microsoft.com/en-us/azure/templates/)
+- [Bicep Documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview)
+- [Terraform on Azure Documentation](https://learn.microsoft.com/en-us/azure/developer/terraform/)
 
-- **Mission-Critical Applications**
-  - Applications that require high availability and cannot afford downtime, such as financial services, healthcare systems, and e-commerce platforms.
-  
-- **Data Storage and Databases**
-  - Databases that need to maintain data integrity and availability, such as SQL databases, NoSQL databases, and data warehouses.
+## Azure Storage
+<div style="display: flex; justify-content: space-between;">
+    <img src="./content/storage.png" alt="Azure Regions" style="width: 48%;">
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <img src="./content/storage_cont.png" alt="Azure Regions" style="width: 70%;">
+      <img src="./content/storage_fs.png" alt="Azure Region Pairs" style="width: 70%;">
+    </div>
+</div>
+
+<div style="display: flex; justify-content: center; padding-top: 10px;">
+  <img src="./content/storage_disk.png" alt="Azure Regions" style="width: 48%;">
+</div>
+
+## Azure Virtual Machines
+<div style="display: flex; justify-content: space-between;">
+    <img src="./content/azure_marketplace1.png" alt="Azure Regions" style="width: 48%;">
+    <img src="./content/azure_marketplace2.png" alt="Azure Regions" style="width: 48%;">
+</div>
+
+<div style="display: flex; justify-content: center; padding-top: 10px;">
+    <img src="./content/vm_cicd.png" alt="Azure Regions" style="width: 48%; height: 10%;">
+</div>
+
+## Azure Networking
+<div style="display: flex; justify-content: space-between;">
+    <img src="./content/nw_hub_spoke.png" alt="Azure Regions" style="width: 48%;">
+    <img src="./content/nw_hybrid.png" alt="Azure Regions" style="width: 48%;">
+</div>
+
+## Azure App Services
+<div style="display: flex; justify-content: space-between;">
+    <img src="./content/app_service.png" alt="Azure Regions" style="width: 48%;">ß
+</div>
 
 ## Demo
 Tasks:
  - login to azure portal and open cloud shell (bash)
- - upload terraform code to cloud storage
- - use vim to edit the code
- - terraform apply
-
-## Questions
-
-
+ - Deploy a VM using cloud shell (terraform)
+ - Deploy a web app using Azure App Services (REST API / azurerm provider)
